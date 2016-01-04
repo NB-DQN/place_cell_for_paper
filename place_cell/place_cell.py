@@ -1,5 +1,4 @@
 from abc import ABCMeta, abstractmethod
-import numpy as np
 
 class PlaceCell(object):
     __metaclass__ = ABCMeta
@@ -7,21 +6,29 @@ class PlaceCell(object):
     def __init__(self, size):
         self.environment_size = size
         self.virtual_coordinate = (0, 0)
-        self.novelty = 0
-        self.novelty_filter = np.zeros(size[0] * size[1], dtype=np.bool)
 
-    def __check_novelty(self, output):
-        self.novelty = 10 if (output & np.logical_not(self.novelty_filter)).any() else 0
-        self.novelty_filter &= output
+    def neighbor(self, action):
+        neighbors = [ \
+            (self.virtual_coordinate[0] + 1, self.virtual_coordinate[1]    ), \
+            (self.virtual_coordinate[0] - 1, self.virtual_coordinate[1]    ), \
+            (self.virtual_coordinate[0]    , self.virtual_coordinate[1] + 1), \
+            (self.virtual_coordinate[0]    , self.virtual_coordinate[1] - 1)]
+        return neighbors[action]
 
-    @abstractmethod
     def validate_action(self, action):
-        pass
+        coordinate = self.neighbor(action)
+        return 0 <= coordinate[0] < self.environment_size[0] and \
+               0 <= coordinate[1] < self.environment_size[1]
+
+    def coordinate_id(self):
+        return self.virtual_coordinate[0] + \
+               self.virtual_coordinate[1] * self.environment_size[0]
+
+    def set_coordinate_id(self, coordinate_id):
+        new_x = coordinate_id % self.environment_size[0]
+        new_y = (coordinate_id - new_x) / self.environment_size[0]
+        self.virtual_coordinate = (new_x, new_y)
 
     @abstractmethod
     def move(self, action):
-        pass
-
-    @abstractmethod
-    def coordinate_id(self):
         pass
