@@ -4,8 +4,8 @@ from abc import ABCMeta, abstractmethod
 class PlaceCell(object):
     __metaclass__ = ABCMeta
 
-    def __init__(self, size):
-        self.environment_size = size
+    def __init__(self, environment_size):
+        self.environment_size = environment_size
         self.virtual_coordinate = (0, 0)
 
     def neighbor(self, action):
