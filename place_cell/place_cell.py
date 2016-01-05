@@ -1,5 +1,6 @@
 from abc import ABCMeta, abstractmethod
 
+
 class PlaceCell(object):
     __metaclass__ = ABCMeta
 
@@ -8,10 +9,10 @@ class PlaceCell(object):
         self.virtual_coordinate = (0, 0)
 
     def neighbor(self, action):
-        neighbors = [ \
-            (self.virtual_coordinate[0] + 1, self.virtual_coordinate[1]    ), \
-            (self.virtual_coordinate[0] - 1, self.virtual_coordinate[1]    ), \
-            (self.virtual_coordinate[0]    , self.virtual_coordinate[1] + 1), \
+        neighbors = [
+            (self.virtual_coordinate[0] + 1, self.virtual_coordinate[1]    ),
+            (self.virtual_coordinate[0] - 1, self.virtual_coordinate[1]    ),
+            (self.virtual_coordinate[0]    , self.virtual_coordinate[1] + 1),
             (self.virtual_coordinate[0]    , self.virtual_coordinate[1] - 1)]
         return neighbors[action]
 
