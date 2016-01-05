@@ -1,8 +1,12 @@
+import os
+import sys
+import random
+from matplotlib import pyplot as plt
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from visual_place_cell import VisualPlaceCell
 from deterministic_place_cell import DeterministicPlaceCell
 
-import random
-from matplotlib import pyplot as plt
 
 size = (9, 9)
 
@@ -26,8 +30,11 @@ for j in range(1000):
         res.append(100)
         pass
 
-    print(j)
+    if (j + 1) % 100 == 0:
+        print j + 1
+    else:
+        sys.stdout.write('.')
+        sys.stdout.flush()
 
 plt.hist(res, bins=100)
 plt.show()
-print(min(res))

@@ -33,15 +33,17 @@ class VisualPlaceCell(PlaceCell):
                                    dtype=np.float32), volatile=not train)
             for name in ('c', 'h')}
 
-    def move(self, action, visual_image):
+    def move(self, action, visual_image=None):
         action_units = [0, 0, 0, 0]
         action_units[action] = 1
 
         if visual_image is None:
-            data = np.array([action + self.predicted_visual_image.tolist()],
-                            dtype='float32')
+            data = np.array(
+                [action_units + self.predicted_visual_image.tolist()],
+                dtype='float32')
         else:
-            data = np.array([action + visual_image.tolist()], dtype='float32')
+            data = np.array(
+                [action_units + visual_image.tolist()], dtype='float32')
         x = chainer.Variable(data, volatile=True)
         h_in = self.lstm.x_to_h(x) + self.lstm.h_to_h(self.state['h'])
         c, h = F.lstm(self.state['c'], h_in)
