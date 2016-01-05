@@ -10,11 +10,11 @@ class PathIntegratingPlaceCell(PlaceCell):
     def __init__(self, size):
         super(PathIntegratingPlaceCell, self).__init__(size)
 
-        self.offset = 2
+        self.offset_timing = 2
         self.state = self.make_initial_state(batchsize=1, train=False)
 
         model_dir = path.join(path.dirname(__file__), 'pickles')
-        lstm_model = path.join(model_dir, 'pipc_%d.pkl' % self.offset)
+        lstm_model = path.join(model_dir, 'pipc_%d.pkl' % self.offset_timing)
         with open(lstm_model, 'rb') as file:
             self.lstm = pickle.load(file)
 
@@ -29,15 +29,10 @@ class PathIntegratingPlaceCell(PlaceCell):
         action_units[action] = 1
 
         coordinate_units = [0] * 81
-        if precise_coordinate is None:
-            coordinate_id = self.coordinate_id()
-        else:
-            coordinate_id = self.coordinate_id(precise_coordinate)
-        if coordinate_id % self.offset == 0 and \
-            (self.offset == 2 or (self.offset == 4 and
-                                  coordinate_id // self.environment_size[0] %
-                                  self.offset == 0)):
-            coordinate_units[coordinate_id] = 1
+        coordinate = precise_coordinate or self.virtual_coordinate
+        if (coordinate[0] + coordinate[1]) % self.offset_timing == 0:
+            coordinate_units[self.coordinate_id(coordinate)] = 1
+
         data = np.array([action_units + coordinate_units], dtype='float32')
         x = chainer.Variable(data, volatile=True)
         h_in = self.lstm.x_to_h(x) + self.lstm.h_to_h(self.state['h'])
