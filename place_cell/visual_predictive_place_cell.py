@@ -6,18 +6,18 @@ import pickle
 import numpy as np
 
 
-class VisualPlaceCell(PlaceCell):
+class VisualPredictivePlaceCell(PlaceCell):
     def __init__(self, size):
-        super(VisualPlaceCell, self).__init__(size)
+        super(VisualPredictivePlaceCell, self).__init__(size)
 
         self.n_units = 60
         self.state = self.make_initial_state(batchsize=1, train=False)
 
         model_dir = path.join(path.dirname(__file__), 'pickles')
-        lstm_model = path.join(model_dir, 'vpc_lstm_%d.pkl' % self.n_units)
+        lstm_model = path.join(model_dir, 'vppc_lstm_%d.pkl' % self.n_units)
         with open(lstm_model, 'rb') as file:
             self.lstm = pickle.load(file)
-        svm_model = path.join(model_dir, 'vpc_svm_%d.pkl' % self.n_units)
+        svm_model = path.join(model_dir, 'vppc_svm_%d.pkl' % self.n_units)
         with open(svm_model, 'rb') as file:
             self.svm = pickle.load(file)
 

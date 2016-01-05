@@ -42,7 +42,7 @@ valid_iter = 20
 # GPU
 parser = argparse.ArgumentParser()
 parser.add_argument('--gpu', '-g', default=-1, type=int,
-                    help='GPU ID (negative value indicates CPU)')                    
+                    help='GPU ID (negative value indicates CPU)')
 args = parser.parse_args()
 mod = cuda.cupy if args.gpu >= 0 else np
 
@@ -64,7 +64,7 @@ if args.gpu >= 0:
     cuda.check_cuda_available()
     cuda.get_device(args.gpu).use()
     model.to_gpu()
-    
+
 # optimizer
 optimizer = optimizers.SGD(lr=1.)
 optimizer.setup(model.collect_parameters())
@@ -94,13 +94,13 @@ def make_initial_state(batchsize=batchsize, train=True):
 def evaluate(data, test=False):
     sum_accuracy = mod.zeros(())
     state = make_initial_state(batchsize=1, train=False)
-    
+
     for i in six.moves.range(len(data['input'])):
         x_batch = mod.asarray([data['input'][i]], dtype = 'float32')
         t_batch = mod.asarray([data['output'][i]], dtype = 'int32')
         state, loss, accuracy = forward_one_step(x_batch, t_batch, state, train=False)
         sum_accuracy += accuracy.data
-        
+
         error = 1 - sum_accuracy / len(data['input'])
     return error # return error, not accuracy!!
 
@@ -117,27 +117,27 @@ valid_errors_se = np.zeros(n_epoch / valid_len + 1)
 for loop in range(len(train_data_length)):
 
     # loop initialization
-    whole_len = train_data_length[loop] 
+    whole_len = train_data_length[loop]
     jump = whole_len // batchsize # = whole len
     cur_log_perp = mod.zeros(())
     start_at = time.time()
     cur_at = start_at
     accum_loss = chainer.Variable(mod.zeros((), dtype=np.float32))
-    
+
     # loop starts
     while epoch <= n_epoch:
-        
+
         # initialize hidden state to 0
         state = make_initial_state()
-        
+
         # train dataset
         if loop == 0:
             train_data = DatasetGenerator(maze_size).generate_seq(whole_len, offset_timing)
         else:
             train_data = DatasetGenerator(maze_size).generate_seq_remote(whole_len, offset_timing)
-        
+
         if epoch % valid_len == 0:
-        
+
             # calculate accuracy, cumulative loss & throughput
             train_perp = evaluate(train_data) # error
             valid_perp_stack = np.zeros(valid_iter)
@@ -149,15 +149,15 @@ for loop in range(len(train_data_length)):
             valid_perp_se = np.std(valid_perp_stack, axis=0) / np.sqrt(valid_iter)
             valid_errors_se[epoch / valid_len] = valid_perp_se
             train_errors[epoch / valid_len] = train_perp
-            
+
             if epoch == 0:
                 perp = None
             else:
                 perp = cuda.to_cpu(cur_log_perp) / valid_len
                 perp = int(perp * 100) / 100.0
-                
+
             now = time.time()
-            
+
             if epoch == 0:
                 throughput = 0.0
             else:
@@ -165,43 +165,43 @@ for loop in range(len(train_data_length)):
 
             print('epoch {}: train perp: {} train classified {}/{}, valid classified {}/100 ({:.2f} epochs/sec)'
             .format(epoch, perp, whole_len * (1 - train_perp), whole_len, 100 * (1 - valid_perp_mean), throughput))
-            
+
             cur_at = now
-            
+
             #  termination criteria
             # if perp < 0.001:
             #     break
             # else:
             #     cur_log_perp.fill(0)
             cur_log_perp.fill(0)
-            
+
         for i in six.moves.range(jump):
-        
+
             # forward propagation
             x_batch = mod.array([train_data['input'][i]],  dtype = 'float32')
             t_batch = mod.array([train_data['output'][i]], dtype = 'int32')
-            
+
             state, loss_i, acc_i = forward_one_step(x_batch, t_batch, state)
             accum_loss += loss_i
             cur_log_perp += loss_i.data.reshape(())
-            
+
             # truncated BPTT
-            if (i + 1) % bprop_len == 0:  
+            if (i + 1) % bprop_len == 0:
                 optimizer.zero_grads()
                 accum_loss.backward()
                 accum_loss.unchain_backward()  # truncate
                 accum_loss = chainer.Variable(mod.zeros((), dtype=np.float32))
                 optimizer.clip_grads(grad_clip) # gradient clip
                 optimizer.update()
-            
+
             sys.stdout.flush()
-            
-        epoch += 1  
-        
-        # save the model    
+
+        epoch += 1
+
+        # save the model
         f = open('pretrained_model_'+str(maze_size[0])+'_'+str(maze_size[1])+'.pkl', 'wb')
         pickle.dump(model, f, 2)
-        f.close()      
+        f.close()
 
 # plot
 x = np.arange(0, n_epoch + 1, valid_len)

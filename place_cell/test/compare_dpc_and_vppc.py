@@ -4,7 +4,7 @@ import random
 from matplotlib import pyplot as plt
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from visual_place_cell import VisualPlaceCell
+from visual_predictive_place_cell import VisualPredictivePlaceCell
 from deterministic_place_cell import DeterministicPlaceCell
 
 
@@ -12,7 +12,7 @@ size = (9, 9)
 
 res = []
 for j in range(1000):
-    vpc = VisualPlaceCell(size)
+    vppc = VisualPredictivePlaceCell(size)
     dpc = DeterministicPlaceCell(size)
     for i in range(100):
         while True:
@@ -20,10 +20,10 @@ for j in range(1000):
             if dpc.validate_action(a):
                 break
 
-        vpc.move(a)
+        vppc.move(a)
         dpc.move(a)
 
-        if vpc.virtual_coordinate != dpc.virtual_coordinate:
+        if vppc.virtual_coordinate != dpc.virtual_coordinate:
             res.append(i)
             break
     else:
