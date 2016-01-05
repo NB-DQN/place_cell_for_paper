@@ -30,7 +30,7 @@ class PathIntegratingPlaceCell(PlaceCell):
 
         coordinate_units = [0] * 81
         if precise_coordinate is None:
-            coordinate_id = self.coordinate_id(self.virtual_coordinate)
+            coordinate_id = self.coordinate_id()
         else:
             coordinate_id = self.coordinate_id(precise_coordinate)
         if coordinate_id % self.offset == 0 and \
@@ -51,6 +51,3 @@ class PathIntegratingPlaceCell(PlaceCell):
         self.set_coordinate_id(coordinate_id)
 
         return self.virtual_coordinate
-
-    def coordinate_id(self, coordinate):
-        return coordinate[0] + coordinate[1] * self.environment_size[0]

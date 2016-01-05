@@ -21,9 +21,10 @@ class PlaceCell(object):
         return 0 <= coordinate[0] < self.environment_size[0] and \
                0 <= coordinate[1] < self.environment_size[1]
 
-    def coordinate_id(self):
-        return self.virtual_coordinate[0] + \
-               self.virtual_coordinate[1] * self.environment_size[0]
+    def coordinate_id(self, coordinate=None):
+        if coordinate is None:
+            coordinate = self.virtual_coordinate
+        return coordinate[0] + coordinate[1] * self.environment_size[0]
 
     def set_coordinate_id(self, coordinate_id):
         new_x = coordinate_id % self.environment_size[0]
