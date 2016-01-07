@@ -31,7 +31,7 @@ for j in range(1000):
         pass
 
     if (j + 1) % 100 == 0:
-        print j + 1
+        print(j + 1)
     else:
         sys.stdout.write('.')
         sys.stdout.flush()
