@@ -105,7 +105,7 @@ class VPPCTrainer(LSTMTrainer):
                     perp = int(perp * 100) / 100.0
 
                 print(
-                    ('epoch: %d, train perp: %d, train mse: %.5f,'
+                    ('epoch: %d, train perp: %d, train mse: %.5f, '
                     + 'validation mse: %.5f (%.2f epochs/sec)') %
                     (epoch + 1, perp, train_perp, valid_perp_mean, throughput))
 
