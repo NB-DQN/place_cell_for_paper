@@ -102,7 +102,7 @@ class DatasetGenerator:
             if (coordinate[0] + coordinate[1]) % offset_timing == 0:
                 image_units_offset.append(image_units[i])
             else:
-                image_units_offset.append([0] * (360 / self.DEGREE_PER_DOT))
+                image_units_offset.append([0] * int(360 / self.DEGREE_PER_DOT))
         return {
             'sequence_length':    sequence_length,
             'offset_timing':      offset_timing,
