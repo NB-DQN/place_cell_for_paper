@@ -70,7 +70,7 @@ class DatasetGenerator:
         coordinates.append(self.current_coordinate)
 
         for i in range(0, sequence_length):
-            action_candidates = range(4)
+            action_candidates = list(range(4))
 
             if go_away_from_start:
                 threshold = 0.2

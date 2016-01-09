@@ -12,7 +12,7 @@ from lstm_trainer import LSTMTrainer
 
 
 class PIPCTrainer(LSTMTrainer):
-    def __init__(self, n_hidden, offset_timing=2, n_epoch=200000,
+    def __init__(self, n_hidden, offset_timing=2, n_epoch=1000,
                  environment_size=(9, 9), sequence_length=100, gpu=-1):
         super(PIPCTrainer, self).__init__(n_hidden, n_epoch,
                                           environment_size=environment_size,
@@ -58,10 +58,6 @@ class PIPCTrainer(LSTMTrainer):
         accum_loss = 0
         print('[train]\ngoing to train %d epochs' % self.n_epoch)
 
-        train_errors = []
-        valid_errors_mean = []
-        valid_errors_se = []
-
         for epoch in range(self.n_epoch):
             if epoch <= self.n_epoch / 2:
                 train_data = self.generate_data()
@@ -72,7 +68,7 @@ class PIPCTrainer(LSTMTrainer):
                 x = self.toVariable(train_data['input'][i], dtype='float32')
                 t = self.toVariable(train_data['output'][i], dtype='int32')
                 h, y = self.model(x)
-                loss_i, mean_squared_error = self.loss(y, t)
+                loss_i, accuracy_i = self.loss(y, t)
                 accum_loss += loss_i
                 cur_log_perp += loss_i.data
 
@@ -89,37 +85,16 @@ class PIPCTrainer(LSTMTrainer):
                 throughput = self.validation_timing / float(now - prev) \
                     if 'prev' in vars() else 0
 
-                train_perp = self.evaluate(train_data)
-                train_errors.append(train_perp)
-
-                valid_perps = self.mod.zeros(self.validation_dataset_length)
-                for i in range(self.validation_dataset_length):
-                    valid_perps[i] = self.evaluate(self.validation_dataset[i])
-                valid_perp_mean = np.mean(valid_perps, axis=0)
-                valid_errors_mean.append(valid_perp_mean)
-                valid_perp_se = np.std(valid_perps, axis=0) / \
-                    np.sqrt(self.validation_timing)
-                valid_errors_se.append(valid_perp_se)
-
-                if epoch == 0:
-                    perp = 0
-                else:
-                    perp = cuda.to_cpu(cur_log_perp) / self.validation_timing
-                    perp = int(perp * 100) / 100.0
-
+                train_perp, valid_perp_mean, valid_perp_se, perp = \
+                    self.validate(epoch, train_data, cur_log_perp)
                 print(
                     ('epoch: %d, train perp: %d, validation classified %d/100 '
                     + '(%.2f epochs/sec)') %
                     (epoch + 1, perp, 100 * (1 - valid_perp_mean), throughput))
 
-                if epoch >= 500:
-                    self.optimizer.lr /= 1.2
-                    print('learning rate: %.3f' % self.optimizer.lr)
-
+                S.save_hdf5('pipc_lstm_%d.pkl' % self.n_hidden, self.model)
                 cur_log_perp = self.mod.zeros(())
                 prev = now
-
-                S.save_hdf5('pipc_lstm_%d.pkl' % self.n_hidden, self.model)
 
             sys.stdout.flush()
 

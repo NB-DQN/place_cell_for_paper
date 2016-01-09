@@ -58,10 +58,6 @@ class VPPCTrainer(LSTMTrainer):
         accum_loss = 0
         print('[train]\ngoing to train %d epochs' % self.n_epoch)
 
-        train_errors = []
-        valid_errors_mean = []
-        valid_errors_se = []
-
         for epoch in range(self.n_epoch):
             train_data = self.generate_data()
 
@@ -86,37 +82,16 @@ class VPPCTrainer(LSTMTrainer):
                 throughput = self.validation_timing / float(now - prev) \
                     if 'prev' in vars() else 0
 
-                train_perp = self.evaluate(train_data)
-                train_errors.append(train_perp)
-
-                valid_perps = self.mod.zeros(self.validation_dataset_length)
-                for i in range(self.validation_dataset_length):
-                    valid_perps[i] = self.evaluate(self.validation_dataset[i])
-                valid_perp_mean = np.mean(valid_perps, axis=0)
-                valid_errors_mean.append(valid_perp_mean)
-                valid_perp_se = np.std(valid_perps, axis=0) / \
-                    np.sqrt(self.validation_timing)
-                valid_errors_se.append(valid_perp_se)
-
-                if epoch == 0:
-                    perp = 0
-                else:
-                    perp = cuda.to_cpu(cur_log_perp) / self.validation_timing
-                    perp = int(perp * 100) / 100.0
-
+                train_perp, valid_perp_mean, valid_perp_se, perp = \
+                    self.validate(epoch, train_data, cur_log_perp)
                 print(
                     ('epoch: %d, train perp: %d, train mse: %.5f, '
                     + 'validation mse: %.5f (%.2f epochs/sec)') %
                     (epoch + 1, perp, train_perp, valid_perp_mean, throughput))
 
-                if epoch >= 500:
-                    self.optimizer.lr /= 1.2
-                    print('learning rate: %.3f' % self.optimizer.lr)
-
+                S.save_hdf5('vppc_lstm_%d.pkl' % self.n_hidden, self.model)
                 cur_log_perp = self.mod.zeros(())
                 prev = now
-
-                S.save_hdf5('vppc_lstm_%d.pkl' % self.n_hidden, self.model)
 
             sys.stdout.flush()
 

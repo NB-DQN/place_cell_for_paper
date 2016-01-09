@@ -8,7 +8,6 @@ Model:
 NOTE: only tested under python3 environment
 """
 
-import pickle
 import numpy as np
 
 from chainer import Chain
@@ -55,6 +54,10 @@ class LSTMTrainer:
         self.offset_timing = offset_timing
         self.gpu = gpu
 
+        self.train_errors = []
+        self.valid_errors_mean = []
+        self.valid_errors_se = []
+
     def setup_model(self): #, classifier):
         self.model = LSTMTrainer.LSTM(64, self.n_hidden, self.n_output)
         for param in self.model.params():
@@ -77,12 +80,39 @@ class LSTMTrainer:
         self.dataset_generator = DatasetGenerator(self.environment_size)
         self.sequence_length = self.sequence_length
         self.offset_timing = self.offset_timing
-        self.validation_timing = 100
+        self.validation_timing = self.n_epoch / 40
         self.validation_dataset_length = 20
         self.validation_dataset = [
             self.generate_data()
             for i in range(self.validation_dataset_length)]
         self.test_data = self.generate_data()
+
+    def validate(self, epoch, train_data, cur_log_perp):
+        train_perp = self.evaluate(train_data)
+        self.train_errors.append(train_perp)
+
+        valid_perps = self.mod.zeros(self.validation_dataset_length)
+        for i in range(self.validation_dataset_length):
+            valid_perps[i] = self.evaluate(self.validation_dataset[i])
+
+        valid_perp_mean = np.mean(valid_perps, axis=0)
+        self.valid_errors_mean.append(valid_perp_mean)
+
+        valid_perp_se = \
+            np.std(valid_perps, axis=0) / np.sqrt(self.validation_timing)
+        self.valid_errors_se.append(valid_perp_se)
+
+        if epoch == 0:
+            perp = 0
+        else:
+            perp = cuda.to_cpu(cur_log_perp) / self.validation_timing
+            perp = int(perp * 100) / 100.0
+
+        if epoch >= self.n_epoch / 4:
+            self.optimizer.lr /= 1.2
+            print('learning rate: %.3f' % self.optimizer.lr)
+
+        return train_perp, valid_perp_mean, valid_perp_se, perp
 
     def toVariable(self, x, dtype='int32', train=True):
         return Variable(self.mod.asarray([x], dtype=dtype), volatile=not train)
