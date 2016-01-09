@@ -95,5 +95,6 @@ class VPPCTrainer(LSTMTrainer):
 
             sys.stdout.flush()
 
-trainer = VPPCTrainer(60)
-trainer.train()
+if __name__ == '__main__':
+    trainer = VPPCTrainer(60)
+    trainer.train()

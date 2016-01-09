@@ -98,5 +98,6 @@ class PIPCTrainer(LSTMTrainer):
 
             sys.stdout.flush()
 
-trainer = PIPCTrainer(25, offset_timing=10)
-trainer.train()
+if __name__ == '__main__':
+    trainer = PIPCTrainer(25, offset_timing=10)
+    trainer.train()
